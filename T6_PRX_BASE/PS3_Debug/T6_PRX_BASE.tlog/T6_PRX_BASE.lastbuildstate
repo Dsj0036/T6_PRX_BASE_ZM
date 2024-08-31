@@ -1,2 +1,2 @@
-#TargetFrameworkVersion=:PlatformToolSet=GCC:EnableManagedIncrementalBuild=:VCToolArchitecture=
+#TargetFrameworkVersion=:PlatformToolSet=SNC:EnableManagedIncrementalBuild=:VCToolArchitecture=
 Debug|PS3|C:\Users\root\source\repos\T6_PRX_BASE\|
