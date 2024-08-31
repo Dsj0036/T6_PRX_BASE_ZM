@@ -2,12 +2,41 @@
 #include "define.h"
 #include "debug.h"
 #include "render.h"
+#include "np.h"
+#include "np\common.h"
+#include "np\basic.h"
+#include <cstring>
 // Created by josh, addresses by stankey or something like that.
 namespace Prog
 {
+#define NP_PRESENCE_ARGUMENTS SceNpBasicPresenceDetails2* data, int opt
+	CREATE_DUMMY_STUB(int, __pres_s, SceNpBasicPresenceDetails2*, int);
 	bool wasInGame = false;
 	bool isInGame = true;
 	const char* mapName = nullptr;
+
+	int update_presence_details(NP_PRESENCE_ARGUMENTS) {
+		int stub_orig = __pres_s(data, opt);
+		
+		std::string str = ".presence\n{\n\t";
+		str += "\"status\": \"";
+		str += data->status;
+		str += "\"\n";
+		str += "\"state\": \"";
+		str += data->state;
+		str += "\"\n";
+		str += "\"title\": \"";
+		str += data->title;
+		str += "\"\n";
+		str += "}";
+		char* jason = (char*)str.c_str();
+
+		FS_RECREATE(RICHPC_DUMP);
+		FS_APPEND_STRING(RICHPC_DUMP, jason);
+
+		return stub_orig;
+	}
+
 	void gameStateChangeCallback(bool was, bool isIt) {
 		if (isIt && (!was)) {
 			Cbuff_addText(0, "cg_fov 120");
@@ -15,10 +44,6 @@ namespace Prog
 			Cbuff_addText(0, "r_dof_enable 20");
 			*(int*)0x01CB6F38 = 120; // cg max fps
 		}
-
-
-
-
 	}
 
 	void updateInGame(bool x, void(*single)(bool, bool) = nullptr) {
@@ -42,17 +67,6 @@ namespace Prog
 		once_GamePaint();
 		
 		if (ingame) {
-			auto mpn = FindMaleableVar("ui_mapname");
-			if (mpn != nullptr) {
-				if (mapName != mpn->current.string) {
-
-					mpn->current.string = mapName;
-					Debug::coutf("New map: %s (dvar: %x)\n", mapName, mpn);
-
-				}
-
-			}
-
 			Renderer::createColor(color, 200, 50, 50, 255);
 			Renderer::DrawText("FontBig", 20, 20, FONT_BIG, 1.0, color);
 			Renderer::DrawText("FontBigDev", 20, 32, FONT_BIG_DEV, 1.0, color);
@@ -65,7 +79,9 @@ namespace Prog
 		return __BoiiPaint(a, b);
 	}
 	void Write() {
+		hookfunction(0x008DE874, take(update_presence_details), take(__pres_s));
 		hookfunction(0x3971A0, take(PaintOverride), take(__BoiiPaint));
+		// sceNpPresenceSetDetails 0x008DE874
 	}
 }
 /*

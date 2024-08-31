@@ -7,6 +7,7 @@
 #define HOMEPATH "/dev_hdd0/tmp/" PROJNAME 
 #define HOMEDIR HOMEPATH "/"
 #define TRACEPATH HOMEDIR "debug.log"
+#define RICHPC_DUMP HOMEDIR "rpc_data.json"
 #define BUILD __DATE__ " " __TIME__ 
 #define ___DEBUG___ true
 #define PAINT 0x3971A0
