@@ -13,6 +13,7 @@ SYS_MODULE_START(Entry);
 extern "C" int Entry(void)
 {
     IM_HERE;
+    Debug::initialize();
     Debug::coutl("Test init stage debug output");
     Prog::Write();
     // end process and keep sprx resident.

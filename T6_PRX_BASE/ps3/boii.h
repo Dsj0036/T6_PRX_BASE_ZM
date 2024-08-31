@@ -1,6 +1,7 @@
 #include "System.h"
 #include "define.h"
 #ifndef __BOII__
+// Created by josh, addresses by stankey or something like that.
 
 #define FONT_SMALL_DEV    "fonts/720/smallDevFont"
 #define FONT_BIG_DEV    "fonts/720/bigDevFont"
@@ -13,7 +14,7 @@
 #define FONT_EXTRA_BIG    "fonts/720/extraBigFont"
 #define FONT_OBJECTIVE    "fonts/720/objectiveFont"
 #define FONT_italicFont    "fonts/720/italicFont"
-
+#define FIXED_WAY true
 template <typename R, typename ...Arguments>
 inline R fcall(long long function, Arguments... args)
 {
@@ -129,6 +130,24 @@ bool getBool_dvar(dvar_t* var) {
 	}
 	return false;
 }
+#if FIXED_WAY
+namespace TocToc
+{
+
+	int registerFontTexture_toc[2] = { 0x75A2C0, TOC };
+	int addCommandDrawText_toc[2] = { 0x76A910, TOC };
+	int materialRegisterHandle_toc[2] = { 0x763220, TOC };
+	int addCommandDrawStretchPictureInternal_toc[2] = { 0x076A3E8, TOC };
+
+
+	void* (*R_RegisterFont)(const char* name, int imageTrack) = (void* (*)(const char*, int)) & registerFontTexture_toc;
+	void(*R_AddCmdDrawText)(const char* text, int maxChars, void* font, float x, float y, float yScale, float xScale, float rotation, float* colors, int Style) = (void(*)(const char*, int, void*, float, float, float, float, float, float*, int)) & addCommandDrawText_toc;
+	void* (*Material_RegisterHandle)(const char* name, int imageTrack, bool errorIfMissing, int waitTime) = (void* (*)(const char*, int, bool, int)) & materialRegisterHandle_toc;
+	void(*R_AddCmdDrawStretchPic)(float x, float y, float w, float h, float s0, float t0, float s1, float t1, float* color, void* material) = (void(*)(float, float, float, float, float, float, float, float, float*, void*)) & addCommandDrawStretchPictureInternal_toc;
+	
+}
+#endif
+#if !FIXED_WAY
 uintptr_t RegisterFont(const char* name, int imageTrack) {
 	return fcall<uint>(0x75A2C0, name, imageTrack);
 }
@@ -136,11 +155,48 @@ void* RegisterHandle(char* name, int imageTrack, bool errorIfMissing, int waitTi
 	return fcall<void*>(0x763220, name, imageTrack, errorIfMissing, waitTime);
 }
 void cmdDrawText(const char* xtext, float x, float y, char* xfont, float fontsize, float* color) {
-	fcall<uint>(0x76A910, xtext, 0x7fffffff, RegisterFont(xfont, 0), x,y, fontsize, fontsize, 0, color, 0);
+	// R_AddCmdDrawText(xtext, 0x7FFFFFFF, R_RegisterFont(xfont, 0), x, y, xfontSize, xfontSize, 0, color, 0);
+	fcall<uint>(0x76A910, xtext, 0x7fffffff, RegisterFont(xfont, 0), x, y, fontsize, fontsize, 0, color, 0);
 }
 void cmdDrawPictureStretch(float x, float y, float w, float h, float s0, float t0, float s1, float t1, float* color, void* material) {
 	fcall<uint>(0x076A3E8, x, y, w, h, s0, t0, s1, t1, color, material);
 }
+#else
 
+void cmdDrawPictureStretch(float x, float y, float width, float height, float* color)
+{
+	TocToc::R_AddCmdDrawStretchPic(x, y, width, height, 0, 0, 1, 1, color, TocToc::Material_RegisterHandle("white", 0, 0, 0));
+}
+void cmdDrawText(const char* xtext, float x, float y, const char* xfont, float xfontSize, float* color)
+{
+	TocToc::R_AddCmdDrawText(xtext, 0x7FFFFFFF, TocToc::R_RegisterFont(xfont, 0), x, y, xfontSize, xfontSize, 0, color, 0);
+}
+
+void bo2_drawNumberedShader(int shaderID, float x, float y, float width, float height, float* color)
+{
+	TocToc::R_AddCmdDrawStretchPic(x, y, width, height, 1, 1, 1, 1, color, TocToc::Material_RegisterHandle("white", 0, false, 0));
+}
+void bo2_drawNumberedText(int textID, const char* xtext, float xx, float xy, const char* xfont, float xfontSize, float* color)
+{
+	TocToc::R_AddCmdDrawText(xtext, 0x7FFFFFFF, TocToc::R_RegisterFont(xfont, 0), xx, xy, xfontSize, xfontSize, 0, color, 0);
+}
+#endif
+bool getBoolByDvarName(const char* name) {
+	return getBool_dvar(FindMaleableVar(name));
+}
+
+void printInKillfeed(const char* msg) {
+	char buffer[0x100];
+	s_snprintf(buffer, 0x100, "; %s", msg);
+	Cbuff_addText(0, buffer);
+}
+template <typename ...Arguments>
+void printInKillfeed(const char* format, Arguments...s) {
+	char buffer[0x50] = "; ";
+	int len = strlen(format);
+	_sys_strncat(buffer, format, len > 0x50 ? 0x50 : len);
+	char buffer2[0x50];
+	s_snprintf(buffer2, 0x50, buffer, s...);
+}
 
 #endif

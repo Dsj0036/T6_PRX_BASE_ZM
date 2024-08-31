@@ -2,6 +2,7 @@
 #include "System.h"
 #include "FileSystem.h"
 #include "define.h"
+// Created by josh, addresses by stankey or something like that.
 
 #if ___DEBUG___
 #define __DEBUG__
@@ -15,6 +16,7 @@
 namespace Debug {
 	// Initializes again an empty log file, without keeping stream open, for reading.
 	bool initialize() {
+		FS_MKDIR(HOMEDIR);
 		FS_RECREATE(TRACEPATH);
 		FS_APPEND_STRING(TRACEPATH, "bo2.log");
 		return FS_GETSIZE(TRACEPATH) != -1;

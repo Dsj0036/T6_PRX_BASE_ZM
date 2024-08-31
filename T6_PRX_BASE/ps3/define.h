@@ -1,5 +1,7 @@
 #pragma once
 #include "System.h"
+// Created by josh, addresses by stankey or something like that.
+
 #define TOC 0xD67E98
 #define PROJNAME "boiibase"
 #define HOMEPATH "/dev_hdd0/tmp/" PROJNAME 

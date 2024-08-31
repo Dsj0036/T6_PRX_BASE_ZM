@@ -1,15 +1,13 @@
 #pragma once
 #include "boii.h"
 #define __RENDER_H__
-// this doesnt make sense at all.
-// missing parameters.
+// Created by josh, addresses by stankey or something like that.
+
 namespace Renderer
 {
+
 	void DrawText(char* text, float x, float y, char* font, float size, float* color) {
 		cmdDrawText(text, x, y, font, size, color);
-	}
-	void DrawNumberedShader(int shaderId, float x, float y, float width, float height, float* color) {
-		cmdDrawPictureStretch(x, y, width, height, 1, 1, 1, 1, color, RegisterHandle("white", 0, false, 0));
 	}
 	void createColor(float(&col)[4], byte r, byte g, byte b, byte a) {
 		col[0] = ((float)r) / 255.0f;

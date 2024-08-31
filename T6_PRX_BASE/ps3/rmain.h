@@ -2,22 +2,95 @@
 #include "define.h"
 #include "debug.h"
 #include "render.h"
-
-
+// Created by josh, addresses by stankey or something like that.
 namespace Prog
 {
+	bool wasInGame = false;
+	bool isInGame = true;
+	const char* mapName = nullptr;
+	void gameStateChangeCallback(bool was, bool isIt) {
+		if (isIt && (!was)) {
+			Cbuff_addText(0, "cg_fov 120");
+			Cbuff_addText(0, "cg_fov_default 120");
+			Cbuff_addText(0, "r_dof_enable 20");
+			*(int*)0x01CB6F38 = 120; // cg max fps
+		}
+
+
+
+
+	}
+
+	void updateInGame(bool x, void(*single)(bool, bool) = nullptr) {
+		if (isInGame != x) {
+
+			wasInGame = isInGame;
+			isInGame = x;
+			if (single) {
+				single(wasInGame, isInGame);
+			}
+
+		}
+	}
 
 	float color[4];
-	DEBUG_ONCE(GamePaint)
-		CREATE_DUMMY_STUB(int, __BoiiPaint, PAINT_ARGS);
+	DEBUG_ONCE(GamePaint);
+	CREATE_DUMMY_STUB(int, __BoiiPaint, PAINT_ARGS);
 	int PaintOverride(PAINT_ARGS) {
-		once_GamePaint();
-		Renderer::createColor(color, 200, 50, 50, 255);
-		Renderer::DrawText("Black Ops 2", 20, 20, FONT_NORMAL, 12, color);
 
+		bool ingame = getBoolByDvarName("cl_ingame");
+		once_GamePaint();
+		
+		if (ingame) {
+			auto mpn = FindMaleableVar("ui_mapname");
+			if (mpn != nullptr) {
+				if (mapName != mpn->current.string) {
+
+					mpn->current.string = mapName;
+					Debug::coutf("New map: %s (dvar: %x)\n", mapName, mpn);
+
+				}
+
+			}
+
+			Renderer::createColor(color, 200, 50, 50, 255);
+			Renderer::DrawText("FontBig", 20, 20, FONT_BIG, 1.0, color);
+			Renderer::DrawText("FontBigDev", 20, 32, FONT_BIG_DEV, 1.0, color);
+			Renderer::DrawText("FontBold", 20, 44, FONT_BOLD, 1.0, color);
+			Renderer::DrawText("FontConsole", 20, 56, FONT_CONSOLE, 1.0, color);
+
+		}
+		
+		updateInGame(ingame, gameStateChangeCallback);
 		return __BoiiPaint(a, b);
 	}
 	void Write() {
-		hookfunction(0x3971A0, (void*) & PaintOverride, (void*)&__BoiiPaint);
+		hookfunction(0x3971A0, take(PaintOverride), take(__BoiiPaint));
 	}
 }
+/*
+  public static UInt32 cg_fov = 0x1CC5200 + 0x18;
+  public static UInt32 cg_fovExtraCam = 0x1CC5320 + 0x18;
+  public static UInt32 cg_fovMin = 0x1CC52C0 + 0x18;
+  public static UInt32 cg_fovScale = 0x1CC5260 + 0x18;
+  public static UInt32 cg_friendlyNameFadeIn = 0x1CC70C0 + 0x18;
+  public static UInt32 cg_friendlyNameFadeOut = 0x1CC7180 + 0x18;
+  public static UInt32 cg_fuelHudVersion = 0x1CCB260 + 0x18;
+  public static UInt32 cg_gun_move_f = 0x1CCD780 + 0x18;
+  public static UInt32 cg_gun_move_minspeed = 0x1CCDB40 + 0x18;
+  public static UInt32 cg_gun_move_r = 0x1CCD7E0 + 0x18;
+  public static UInt32 cg_gun_move_rate = 0x1CCDAE0 + 0x18;
+  public static UInt32 cg_gun_move_u = 0x1CCD840 + 0x18;
+  public static UInt32 cg_gun_ofs_f = 0x1CCD8A0 + 0x18;
+  public static UInt32 cg_gun_ofs_r = 0x1CCD900 + 0x18;
+  public static UInt32 cg_gun_ofs_u = 0x1CCD960 + 0x18;
+  public static UInt32 cg_gun_rot_minspeed = 0x1CCDC00 + 0x18;
+  public static UInt32 cg_gun_rot_p = 0x1CCD9C0 + 0x18;
+  public static UInt32 cg_gun_rot_r = 0x1CCDA80 + 0x18;
+  public static UInt32 cg_gun_rot_rate = 0x1CCDBA0 + 0x18;
+  public static UInt32 cg_gun_rot_y = 0x1CCDA20 + 0x18;
+  public static UInt32 cg_gun_x = 0x1CCD660 + 0x18;
+  public static UInt32 cg_gun_y = 0x1CCD6C0 + 0x18;
+  public static UInt32 cg_gun_z = 0x1CCD720 + 0x18;
+
+*/
